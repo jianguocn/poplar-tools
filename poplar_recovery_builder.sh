@@ -91,7 +91,7 @@ function usage() {
 	echo >&2
 	echo "  for a Linux image, [arg] is a root file system tar archive" >&2
 	echo "  if [arg] is \"android\" an Android image is built" >&2
-	echo "  [arg] is only required for all or system partition" >&2
+	echo "  [arg] is only required for all, layout or system partition" >&2
 	echo >&2
 	exit 1
 }
@@ -123,9 +123,15 @@ function parseargs() {
 		INPUT_FILES="${INPUT_FILES} KERNEL_IMAGE"
 		INPUT_FILES="${INPUT_FILES} DEVICE_TREE_BINARY"
 		;;&
-	boot|loader|layout)
-		#echo "case boot|loader|layout" >&2
+	boot|loader)
+		#echo "case boot|loader" >&2
 		[ $# -ge 2 ] && usage "invalid arg (not required)"
+		;;
+	layout)
+		#echo "case layout" >&2
+		if [ "$2" = "android" ]; then
+			IMAGE_TYPE=Android
+		fi
 		;;
 	all|system)
 		# this is required to prevent an invalid arg from triggering
@@ -443,8 +449,9 @@ function disk_partition() {
 			echo -n " start=${PART_OFFSET[$i]}"
 			echo -n " size=${PART_SIZE[$i]}"
 			echo -n " type=${PART_TYPE[$i]}"
-			[ $i -eq ${PART_BOOT=${part_number}} ] &&
+			if [[ $i -eq ${PART_BOOT=${part_number}} ]]; then
 				echo -n " bootable"
+			fi
 			echo ""
 		done
 		echo "write"
@@ -847,14 +854,14 @@ file_validate
 
 partition_init
 partition_define 8191   none loader
-partition_define 262144 vfat /boot
 if [ "${IMAGE_TYPE}" = Android ]; then
-	partition_define 81919  none android_boot
-	partition_define -1     none extended
+	partition_define    81920 none android_boot
 	partition_define  2097151 ext4 android_system
+	partition_define       -1 none extended
 	partition_define  2097151 ext4 android_cache
-	partition_define 10723328 ext4 android_user_data
+	partition_define 10985472 ext4 android_user_data
 else
+	partition_define 262144 vfat /boot
 	partition_define 3999743 ext4 /
 	# We'll not use the rest (10999809 sectors) for now
 	# partition_define -1  none extended
