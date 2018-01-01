@@ -130,6 +130,7 @@ function parseargs() {
 		;;
 	layout)
 		#echo "case layout" >&2
+		INPUT_FILES=""
 		if [ "$2" = "android" ]; then
 			IMAGE_TYPE=Android
 		fi
@@ -200,8 +201,11 @@ function file_validate() {
 		[ -r ${file} ] || nope "$i \"$file\" is not readable"
 		[ -s ${file} ] || nope "$i \"$file\" is empty"
 	done
-	[ $(file_bytes ${L_LOADER}) -gt ${SECTOR_BYTES} ] ||
-	nope "l_loader is much too small"
+
+	if [ -f ${L_LOADER} ] ; then
+		[ $(file_bytes ${L_LOADER}) -gt ${SECTOR_BYTES} ] ||
+		nope "l_loader is much too small"
+	fi
 }
 
 # We use the partition types accepted in /etc/fstab for Linux.
@@ -356,6 +360,10 @@ function partition_check_alignment() {
 # Only one thing to validate right now.  The loader file (without MBR)
 # must fit in the first partition.  Warn for non-aligned partitions.
 function partition_validate() {
+	if [ ! -f ${L_LOADER} ] ; then
+		return;
+	fi
+
 	local loader_bytes=$(expr $(file_bytes ${L_LOADER}) - ${SECTOR_BYTES})
 	local loader_part_bytes=$(expr ${PART_SIZE[1]} \* ${SECTOR_BYTES});
 	local i
@@ -890,7 +898,9 @@ fi
 
 # Save a copy of  "fastboot.bin" so it can be placed on a USB stick,
 # allowing it to be bootable for de-bricking.
-cp ${USB_LOADER} ${RECOVERY}/fastboot.bin
+if [ -f ${USB_LOADER} ] ; then
+	cp ${USB_LOADER} ${RECOVERY}/fastboot.bin
+fi
 
 # Populate the boot file system and save it to its partition
 if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "loader_boot" ] || \
