@@ -52,6 +52,10 @@ USB_SIZE=4000000	# A little under 2 GB in sectors
 LOADER=${RECOVERY}/loader.bin	# omits 1st sector of l-loader.bin
 INSTALL_SCRIPT=install	# for U-boot to run on the target
 
+# U-Boot command to load images
+LOAD_COMMAND=tftp
+#LOAD_COMMAND="fatload usb 0:1"
+
 TEMPFILE=$(mktemp -p .)
 
 ###############
@@ -720,7 +724,7 @@ function installer_init_sub_script() {
 	# will be created.  It will be compiled into a binary file
 	# with the extension ".scr" when we're done creating it
 	installer_update "# ${description}"
-	installer_update "tftp ${SUB_ADDR} ${new_script}.scr"
+	installer_update "${LOAD_COMMAND} ${SUB_ADDR} ${new_script}.scr"
 	installer_update "source ${SUB_ADDR}"
 	installer_update ""
 
@@ -741,7 +745,7 @@ function installer_add_file() {
 
 	gzip ${filename}
 
-	installer_update "tftp ${IN_ADDR} ${filename}.gz"
+	installer_update "${LOAD_COMMAND} ${IN_ADDR} ${filename}.gz"
 	installer_update "unzip ${IN_ADDR} ${OUT_ADDR} ${hex_bytes}"
 	installer_update "mmc write ${OUT_ADDR} ${hex_disk_offset} ${hex_size}"
 	installer_update "echo"
