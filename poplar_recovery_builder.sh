@@ -132,8 +132,10 @@ function parseargs() {
 		;;&
 	all|loader_boot|boot)
 		#echo "case all|loader_boot|boot" >&2
-		INPUT_FILES="${INPUT_FILES} KERNEL_IMAGE"
-		INPUT_FILES="${INPUT_FILES} DEVICE_TREE_BINARY"
+		if [ "${IMAGE_TYPE}" = Linux ]; then
+			INPUT_FILES="${INPUT_FILES} KERNEL_IMAGE"
+			INPUT_FILES="${INPUT_FILES} DEVICE_TREE_BINARY"
+		fi
 		;;
 	loader)
 		#echo "case loader" >&2
@@ -910,7 +912,9 @@ fi
 # Populate the boot file system and save it to its partition
 if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "loader_boot" ] || \
 	[ "${PARTS}" = "boot" ]; then
-	populate_boot ${PART_BOOT}
+	if [ "${IMAGE_TYPE}" = Linux ]; then
+		populate_boot ${PART_BOOT}
+	fi
 fi
 
 # Now populate the rest of the partitions; we save them below
