@@ -52,10 +52,6 @@ USB_SIZE=4000000	# A little under 2 GB in sectors
 LOADER=${RECOVERY}/loader.bin	# omits 1st sector of l-loader.bin
 INSTALL_SCRIPT=install	# for U-boot to run on the target
 
-# U-Boot command to load images
-LOAD_COMMAND=tftp
-#LOAD_COMMAND="fatload usb 0:1"
-
 TEMPFILE=$(mktemp -p .)
 
 ###############
@@ -84,19 +80,21 @@ function usage() {
 	echo >&2
 	echo "${PROGNAME}: $@" >&2
 	echo >&2
-	echo "Usage: ${PROGNAME} <partition> [arg]" >&2
+	echo "Usage: ${PROGNAME} <partition> [-a] [-u]" >&2
 	echo >&2
 	echo "  partition" >&2
-	echo "  all		build all partitions below" >&2
-	echo "  layout	build layout partition only" >&2
-	echo "  loader	build loader partition only" >&2
-	echo "  boot		build boot partition only" >&2
-	echo "  loader_boot	build loader and boot partitions only" >&2
-	echo "  system	build system parition only" >&2
+	echo "    all           build all partitions below" >&2
+	echo "    layout        build layout partition only" >&2
+	echo "    loader        build loader partition only" >&2
+	echo "    boot          build boot partition only" >&2
+	echo "    loader_boot   build loader and boot partitions only" >&2
+	echo "    system        build system parition only" >&2
 	echo >&2
-	echo "  for a Linux image, [arg] is a root file system tar archive" >&2
-	echo "  if [arg] is \"android\" an Android image is built" >&2
-	echo "  [arg] is only required for all, layout or system partition" >&2
+	echo "  -a|--android" >&2
+	echo "    Build Android images instead of Linux" >&2
+	echo >&2
+	echo "  -u|--usb" >&2
+	echo "    Use USB load command instead of tftp" >&2
 	echo >&2
 	exit 1
 }
@@ -105,15 +103,24 @@ function parseargs() {
 	# Make sure a single argument was supplied
 	[ $# -lt 1 ] && usage "no partition specified"
 
+	PARTS=$1
+	shift
+
+	LOAD_COMMAND=tftp
 	IMAGE_TYPE=Linux
 	INPUT_FILES="L_LOADER USB_LOADER"
 
-	case $1 in
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			-a|--android) IMAGE_TYPE=Android; shift ;;
+			-u|--usb) LOAD_COMMAND="fatload usb 0:1"; shift ;;
+		esac
+	done
+
+	case ${PARTS} in
 	all|system)
 		#echo "case all|system" >&2
-		[ -z "$2" ] && usage "no arg (filesystem) supplied"
-		if [ "$2" = "android" ]; then
-			IMAGE_TYPE=Android
+		if [ "${IMAGE_TYPE}" = Android ]; then
 			INPUT_FILES="${INPUT_FILES} ANDROID_BOOT_IMAGE"
 			INPUT_FILES="${INPUT_FILES} ANDROID_SYSTEM_IMAGE"
 			INPUT_FILES="${INPUT_FILES} ANDROID_CACHE_IMAGE"
@@ -127,17 +134,13 @@ function parseargs() {
 		#echo "case all|loader_boot|boot" >&2
 		INPUT_FILES="${INPUT_FILES} KERNEL_IMAGE"
 		INPUT_FILES="${INPUT_FILES} DEVICE_TREE_BINARY"
-		;;&
-	loader_boot|boot|loader)
-		#echo "case loader_boot|boot|loader" >&2
-		[ $# -ge 2 ] && usage "invalid arg (not required)"
+		;;
+	loader)
+		#echo "case loader" >&2
 		;;
 	layout)
 		#echo "case layout" >&2
 		INPUT_FILES=""
-		if [ "$2" = "android" ]; then
-			IMAGE_TYPE=Android
-		fi
 		;;
 	all|system)
 		# this is required to prevent an invalid arg from triggering
@@ -148,8 +151,6 @@ function parseargs() {
 		#echo "case *" >&2
 		usage "invalid partition"
 	esac
-
-	PARTS=$1
 }
 
 function suser() {
