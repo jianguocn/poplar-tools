@@ -121,7 +121,6 @@ function parseargs() {
 	all|system)
 		#echo "case all|system" >&2
 		if [ "${IMAGE_TYPE}" = Android ]; then
-			INPUT_FILES="${INPUT_FILES} ANDROID_BOOT_IMAGE"
 			INPUT_FILES="${INPUT_FILES} ANDROID_SYSTEM_IMAGE"
 			INPUT_FILES="${INPUT_FILES} ANDROID_CACHE_IMAGE"
 			INPUT_FILES="${INPUT_FILES} ANDROID_USER_DATA_IMAGE"
@@ -135,6 +134,8 @@ function parseargs() {
 		if [ "${IMAGE_TYPE}" = Linux ]; then
 			INPUT_FILES="${INPUT_FILES} KERNEL_IMAGE"
 			INPUT_FILES="${INPUT_FILES} DEVICE_TREE_BINARY"
+		else
+			INPUT_FILES="${INPUT_FILES} ANDROID_BOOT_IMAGE"
 		fi
 		;;
 	loader)
@@ -914,14 +915,14 @@ if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "loader_boot" ] || \
 	[ "${PARTS}" = "boot" ]; then
 	if [ "${IMAGE_TYPE}" = Linux ]; then
 		populate_boot ${PART_BOOT}
+	else
+		populate_android_boot ${PART_ANDROID_BOOT}
 	fi
 fi
 
 # Now populate the rest of the partitions; we save them below
 if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "system" ] ; then
 	if [ "${IMAGE_TYPE}" = Android ]; then
-		[ "${PART_ANDROID_BOOT}" ] &&
-			populate_android_boot ${PART_ANDROID_BOOT}
 		[ "${PART_ANDROID_SYSTEM}" ] &&
 			populate_android_system ${PART_ANDROID_SYSTEM}
 		[ "${PART_ANDROID_CACHE}" ] &&
