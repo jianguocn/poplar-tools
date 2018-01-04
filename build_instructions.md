@@ -46,16 +46,14 @@ package a USB recovery device. These instructions assume you are using Linux bas
 ```
 
 ### Step 4: Get the source code.
-  The "latest" branch in these repositories should always point to a
-  known working copy of the code.
 
 ```shell
   cd ${TOP}
   git clone https://github.com/ARM-software/arm-trusted-firmware
-  git clone https://github.com/linaro/poplar-tools.git -b latest
-  git clone https://github.com/linaro/poplar-l-loader.git -b latest
-  git clone https://github.com/linaro/poplar-u-boot.git -b latest
-  git clone https://github.com/linaro/poplar-linux.git -b latest
+  git clone https://github.com/96boards-poplar/poplar-tools.git
+  git clone https://github.com/96boards-poplar/l-loader.git
+  git clone https://github.com/96boards-poplar/u-boot.git
+  git clone https://github.com/96boards-poplar/linux.git -b poplar-4.9
   git clone https://github.com/OP-TEE/optee_os
   git clone https://github.com/OP-TEE/optee_client
   git clone https://github.com/OP-TEE/optee_test
@@ -63,11 +61,10 @@ package a USB recovery device. These instructions assume you are using Linux bas
 
 ### Step 5: Set up toolchains for building
   Almost everything uses aarch64, but one item (l-loader.bin) must
-  be built for 32-bit ARM.  In addition, UEFI (which we aren't using
-  now but will use soon) requires the compiler to be no newer than
-  GCC 4.9.  Finally, the newest versions of GCC warn and in some
-  case treat as errors some things that have not been fixed in code
-  that's not Poplar-specific in the Linux 4.4 kernel code.
+  be built for 32-bit ARM.  In addition, UEFI requires the compiler
+  to be no newer than GCC 4.9.  Finally, the newest versions of GCC
+  warn and in some case treat as errors some things that have not been
+  fixed in code that's not Poplar-specific in the Linux kernel code.
   The easiest way to avoid problems due to these requirements is to
   just use the 4.9 version of GCC for 64-bit ARM, and a stable but
   new version of GCC for 32-bit ARM.  If you already have installed
@@ -112,7 +109,7 @@ package a USB recovery device. These instructions assume you are using Linux bas
     # This produces one output file, which is used when building ARM
     # Trusted Firmware, next:
     #       u-boot.bin
-    cd ${TOP}/poplar-u-boot
+    cd ${TOP}/u-boot
     make distclean
     make CROSS_COMPILE=${CROSS_64} poplar_defconfig
     make CROSS_COMPILE=${CROSS_64}
@@ -155,7 +152,7 @@ package a USB recovery device. These instructions assume you are using Linux bas
     cd ${TOP}/arm-trusted-firmware
     make distclean
     make CROSS_COMPILE=${CROSS_64} all fip DEBUG=1 PLAT=poplar SPD=opteed \
-	BL33=${TOP}/poplar-u-boot/u-boot.bin \
+	BL33=${TOP}/u-boot/u-boot.bin \
 	BL32=${TOP}/optee_os/out/arm-plat-poplar/core/tee-pager.bin
 ```
 
@@ -169,7 +166,7 @@ package a USB recovery device. These instructions assume you are using Linux bas
     # This produces one output file, which is used in building the
     # USB flash drive:
     #       l-loader.bin
-    cd ${TOP}/poplar-l-loader
+    cd ${TOP}/l-loader
     cp ${TOP}/arm-trusted-firmware/build/poplar/debug/bl1.bin atf/
     cp ${TOP}/arm-trusted-firmware/build/poplar/debug/fip.bin atf/
     make clean
@@ -189,7 +186,7 @@ package a USB recovery device. These instructions assume you are using Linux bas
     # the USB flash drive image:
     #       arch/arm64/boot/Image
     #       arch/arm64/boot/dts/hisilicon/hi3798cv200-poplar.dtb
-    cd ${TOP}/poplar-linux
+    cd ${TOP}/linux
     JOBCOUNT=$(grep ^processor /proc/cpuinfo | wc -l)
     make ARCH=arm64 distclean
     make ARCH=arm64 CROSS_COMPILE="${CROSS_64}" poplar_defconfig
@@ -204,9 +201,9 @@ package a USB recovery device. These instructions assume you are using Linux bas
 ```shell
     cd ${TOP}/recovery
     cp ${TOP}/poplar-tools/poplar_recovery_builder.sh .
-    cp ${TOP}/poplar-l-loader/l-loader.bin .
-    cp ${TOP}/poplar-linux/arch/arm64/boot/Image .
-    cp ${TOP}/poplar-linux/arch/arm64/boot/dts/hisilicon/hi3798cv200-poplar.dtb .
+    cp ${TOP}/l-loader/l-loader.bin .
+    cp ${TOP}/linux/arch/arm64/boot/Image .
+    cp ${TOP}/linux/arch/arm64/boot/dts/hisilicon/hi3798cv200-poplar.dtb .
 ```
 
 ### Step 7: Build image files used for recovery and installation
@@ -232,7 +229,7 @@ package a USB recovery device. These instructions assume you are using Linux bas
 
 **NOTE**: If you get below error, that means your `mkimage` version is
 too old, e.g. if you using Ubuntu 14.04. Use the one you just built in
-`${TOP}/poplar-u-boot/tools` instead.
+`${TOP}/u-boot/tools` instead.
 
 ```shell
 Invalid CPU Type - valid names are: alpha, arm, x86, ia64, m68k, microblaze, mips, mips64, nios2, powerpc, ppc, s390, sh, sparc, sparc64, blackfin, avr32, nds32, or1k, sandbox
