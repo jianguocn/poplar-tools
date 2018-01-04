@@ -227,6 +227,18 @@ package a USB recovery device. These instructions assume you are using Linux bas
 		    linaro-stretch-developer-20170914-80.tar.gz
 ```
 
+**NOTE**: If you are running Ubuntu 14.04, sfdisk needs to be upgraded
+to a newer version like 2.26.2 in following steps.
+
+```shell
+wget https://www.kernel.org/pub/linux/utils/util-linux/v2.26/util-linux-2.26.2.tar.xz
+tar xf util-linux-2.26.2.tar.xz
+cd util-linux-2.26.2
+./configure
+make sfdisk
+export PATH=/path/to/util-linux-2.26.2:$PATH
+```
+
 **NOTE**: If you get below error, that means your `mkimage` version is
 too old, e.g. if you using Ubuntu 14.04. Use the one you just built in
 `${TOP}/u-boot/tools` instead.
