@@ -88,7 +88,10 @@ function usage() {
 	echo "    loader        build loader partition only" >&2
 	echo "    boot          build boot partition only" >&2
 	echo "    loader_boot   build loader and boot partitions only" >&2
-	echo "    system        build system parition only" >&2
+	echo "    system        build system partition only" >&2
+	echo "    cache         build android cache partition only" >&2
+	echo "    userdata      build android userdata partition only" >&2
+	echo "    android       build android boot, system, cache and userdata partitions" >&2
 	echo >&2
 	echo "  -a|--android" >&2
 	echo "    Build Android images instead of Linux" >&2
@@ -108,7 +111,7 @@ function parseargs() {
 
 	LOAD_COMMAND=tftp
 	IMAGE_TYPE=Linux
-	INPUT_FILES="L_LOADER USB_LOADER"
+	INPUT_FILES=""
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -118,40 +121,47 @@ function parseargs() {
 	done
 
 	case ${PARTS} in
-	all|system)
-		#echo "case all|system" >&2
+	cache|userdata|android)
+		IMAGE_TYPE=Android
+	esac
+
+	case ${PARTS} in
+	all|android|system)
 		if [ "${IMAGE_TYPE}" = Android ]; then
 			INPUT_FILES="${INPUT_FILES} ANDROID_SYSTEM_IMAGE"
-			INPUT_FILES="${INPUT_FILES} ANDROID_CACHE_IMAGE"
-			INPUT_FILES="${INPUT_FILES} ANDROID_USER_DATA_IMAGE"
 		else
 			ROOT_FS_ARCHIVE=$2
 			INPUT_FILES="${INPUT_FILES} ROOT_FS_ARCHIVE"
 		fi
 		;;&
-	all|loader_boot|boot)
-		#echo "case all|loader_boot|boot" >&2
+	all|android|cache)
+		if [ "${IMAGE_TYPE}" = Android ]; then
+			INPUT_FILES="${INPUT_FILES} ANDROID_CACHE_IMAGE"
+		fi
+		;;&
+	all|android|userdata)
+		if [ "${IMAGE_TYPE}" = Android ]; then
+			INPUT_FILES="${INPUT_FILES} ANDROID_USER_DATA_IMAGE"
+		fi
+		;;&
+	all|android|boot|loader_boot)
 		if [ "${IMAGE_TYPE}" = Linux ]; then
 			INPUT_FILES="${INPUT_FILES} KERNEL_IMAGE"
 			INPUT_FILES="${INPUT_FILES} DEVICE_TREE_BINARY"
 		else
 			INPUT_FILES="${INPUT_FILES} ANDROID_BOOT_IMAGE"
 		fi
-		;;
-	loader)
-		#echo "case loader" >&2
-		;;
+		;;&
+	all|loader|loader_boot)
+		INPUT_FILES="${INPUT_FILES} L_LOADER USB_LOADER"
+		;;&
 	layout)
-		#echo "case layout" >&2
-		INPUT_FILES=""
-		;;
-	all|system)
+		;;&
+	all|android|system|cache|userdata|boot|loader|loader_boot|layout)
 		# this is required to prevent an invalid arg from triggering
 		# an invalid partition error below
-		#echo "case all|system" >&2
 		;;
 	*)
-		#echo "case *" >&2
 		usage "invalid partition"
 	esac
 }
@@ -912,7 +922,7 @@ fi
 
 # Populate the boot file system and save it to its partition
 if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "loader_boot" ] || \
-	[ "${PARTS}" = "boot" ]; then
+	[ "${PARTS}" = "boot" ] || [ "${PARTS}" = "android" ]; then
 	if [ "${IMAGE_TYPE}" = Linux ]; then
 		populate_boot ${PART_BOOT}
 	else
@@ -921,17 +931,30 @@ if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "loader_boot" ] || \
 fi
 
 # Now populate the rest of the partitions; we save them below
-if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "system" ] ; then
+if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "android" ] || \
+	[ "${PARTS}" = "system" ] ; then
 	if [ "${IMAGE_TYPE}" = Android ]; then
 		[ "${PART_ANDROID_SYSTEM}" ] &&
 			populate_android_system ${PART_ANDROID_SYSTEM}
-		[ "${PART_ANDROID_CACHE}" ] &&
-			populate_android_cache ${PART_ANDROID_CACHE}
-		[ "${PART_ANDROID_USER_DATA}" ] &&
-			populate_android_user_data ${PART_ANDROID_USER_DATA}
 	else
 		[ "${PART_ROOT}" ] && populate_root ${PART_ROOT}
 		# We won't populate the other file systems for now
+	fi
+fi
+
+if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "android" ] || \
+	[ "${PARTS}" = "cache" ] ; then
+	if [ "${IMAGE_TYPE}" = Android ]; then
+		[ "${PART_ANDROID_CACHE}" ] &&
+			populate_android_cache ${PART_ANDROID_CACHE}
+	fi
+fi
+
+if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "android" ] || \
+	[ "${PARTS}" = "userdata" ] ; then
+	if [ "${IMAGE_TYPE}" = Android ]; then
+		[ "${PART_ANDROID_USER_DATA}" ] &&
+			populate_android_user_data ${PART_ANDROID_USER_DATA}
 	fi
 fi
 
