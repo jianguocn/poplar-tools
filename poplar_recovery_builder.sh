@@ -10,7 +10,7 @@ set -e		# Accept no failure
 
 # "Sizes" are all in sectors.  Otherwise we call it "bytes".
 SECTOR_BYTES=512
-EMMC_SIZE=15269888	# 7456 MB in sectors (not hex)
+EMMC_SIZE=14942208	# 7296 MB in sectors (not hex)
 
 CHUNK_SIZE=524288	# Partition image chuck size in sectors (not hex)
 
@@ -885,7 +885,7 @@ if [ "${IMAGE_TYPE}" = Android ]; then
 	partition_define  2097151 ext4 android_system
 	partition_define       -1 none extended
 	partition_define  2097151 ext4 android_cache
-	partition_define 10985472 ext4 android_user_data
+	partition_define       -1 ext4 android_user_data
 else
 	partition_define 262144 vfat /boot
 	partition_define 3999743 ext4 /
