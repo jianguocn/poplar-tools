@@ -25,8 +25,8 @@ It come with inside this package for your convenience. You will want to either c
 
 ## Instruction for create debian recovery image
 
-https://github.com/96boards-poplar/Documentation/blob/master/build_instructions.md
+https://github.com/96boards-poplar/Documentation/blob/master/debian_build_instructions.md
 
 ## Instruction for create Android recovery and flash image
 
-TODO
+https://github.com/96boards-poplar/Documentation/tree/master/android
