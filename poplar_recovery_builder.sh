@@ -53,6 +53,8 @@ LOADER=${RECOVERY}/loader.bin	# omits 1st sector of l-loader.bin
 INSTALL_SCRIPT=install	# for U-boot to run on the target
 
 TEMPFILE=$(mktemp -p .)
+IMAGE_TYPE=Linux
+MANUFACTURE=false
 
 ###############
 
@@ -80,7 +82,7 @@ function usage() {
 	echo >&2
 	echo "${PROGNAME}: $@" >&2
 	echo >&2
-	echo "Usage: ${PROGNAME} <partition> [-a] [-u]" >&2
+	echo "Usage: ${PROGNAME} <partition> [-a] [-u] [-m]" >&2
 	echo >&2
 	echo "  partition" >&2
 	echo "    all           build all partitions below" >&2
@@ -99,6 +101,9 @@ function usage() {
 	echo "  -u|--usb" >&2
 	echo "    Use USB load command instead of tftp" >&2
 	echo >&2
+	echo "  -m|--manufacture" >&2
+	echo "    Generate commands for manufacture purpose" >&2
+	echo >&2
 	exit 1
 }
 
@@ -110,13 +115,13 @@ function parseargs() {
 	shift
 
 	LOAD_COMMAND=tftp
-	IMAGE_TYPE=Linux
 	INPUT_FILES=""
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
 			-a|--android) IMAGE_TYPE=Android; shift ;;
 			-u|--usb) LOAD_COMMAND="fatload usb 0:1"; shift ;;
+			-m|--manufacture) MANUFACTURE=true; shift ;;
 		esac
 	done
 
@@ -720,6 +725,15 @@ function installer_init() {
 	installer_update "# Poplar ${IMAGE_TYPE} recovery U-Boot script"
 	installer_update "# Created $(date)"
 	installer_update ""
+
+	if [ "${MANUFACTURE}" = true ] ; then
+		installer_update "echo configure EXT_CSD of eMMC"
+		installer_update "mmc rst-function 0 1"
+		installer_update "mmc partconf 0 0 7 0"
+		installer_update "mmc bootbus 0 1 0 0"
+		installer_update ""
+	fi
+
 	if [ "${IMAGE_TYPE}" = Linux ]; then
 		if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "system" ] ; then
 			installer_update "# Root file system built from:"
@@ -777,6 +791,13 @@ function installer_finish_sub_script() {
 function installer_finish() {
 	installer_update "echo ============ INSTALLATION IS DONE ============="
 	installer_update "echo (Please reset your board)"
+
+	if [ "${MANUFACTURE}" = true ] && [ "${IMAGE_TYPE}" = Android ]; then
+		installer_update "echo change bootcmd for Andorid"
+		installer_update "env set bootcmd run bootai"
+		installer_update "env save"
+		installer_update "reset"
+	fi
 
 	echo
 	echo === building installer ===
