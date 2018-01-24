@@ -88,6 +88,7 @@ function usage() {
 	echo "    all           build all partitions below" >&2
 	echo "    layout        build layout partition only" >&2
 	echo "    loader        build loader partition only" >&2
+	echo "    layout_loader build layout and loader partition only" >&2
 	echo "    boot          build boot partition only" >&2
 	echo "    loader_boot   build loader and boot partitions only" >&2
 	echo "    system        build system partition only" >&2
@@ -157,12 +158,12 @@ function parseargs() {
 			INPUT_FILES="${INPUT_FILES} ANDROID_BOOT_IMAGE"
 		fi
 		;;&
-	all|loader|loader_boot)
+	all|loader|layout_loader|loader_boot)
 		INPUT_FILES="${INPUT_FILES} L_LOADER USB_LOADER"
 		;;&
-	layout)
+	layout|layout_loader)
 		;;&
-	all|android|system|cache|userdata|boot|loader|loader_boot|layout)
+	all|android|system|cache|userdata|boot|loader|loader_boot|layout_loader|layout)
 		# this is required to prevent an invalid arg from triggering
 		# an invalid partition error below
 		;;
@@ -923,7 +924,8 @@ suser
 # Ready to start creating
 disk_partition
 installer_init
-if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "layout" ] ; then
+if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "layout" ] || \
+	[ "${PARTS}" = "layout_loader" ] ; then
 	save_layout
 fi
 
@@ -931,7 +933,7 @@ echo === populating loader partition and file systems in image ===
 
 # Create the loader file and save it to its partition
 if [ "${PARTS}" = "all" ] || [ "${PARTS}" = "loader_boot" ] || \
-	[ "${PARTS}" = "loader" ]; then
+	[ "${PARTS}" = "loader" ] || [ "${PARTS}" = "layout_loader" ] ; then
 	populate_loader
 fi
 
