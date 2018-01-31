@@ -170,6 +170,10 @@ function parseargs() {
 	*)
 		usage "invalid partition"
 	esac
+
+	if [ "${IMAGE_TYPE}" = Linux ] && [ -f Image ]  && [ "`grep "Linux version 4.9" Image`" = "Binary file Image matches" ]; then
+		EMMC_DEV=/dev/mmcblk1
+	fi
 }
 
 function suser() {
