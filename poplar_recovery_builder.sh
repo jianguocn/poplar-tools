@@ -123,6 +123,7 @@ function parseargs() {
 			-a|--android) IMAGE_TYPE=Android; shift ;;
 			-u|--usb) LOAD_COMMAND="fatload usb 0:1"; shift ;;
 			-m|--manufacture) MANUFACTURE=true; shift ;;
+			*) ROOT_FS_ARCHIVE=$1; shift ;;
 		esac
 	done
 
@@ -136,7 +137,6 @@ function parseargs() {
 		if [ "${IMAGE_TYPE}" = Android ]; then
 			INPUT_FILES="${INPUT_FILES} ANDROID_SYSTEM_IMAGE"
 		else
-			ROOT_FS_ARCHIVE=$2
 			INPUT_FILES="${INPUT_FILES} ROOT_FS_ARCHIVE"
 		fi
 		;;&
