@@ -8,6 +8,9 @@ PROGNAME=$(basename $0)
 
 set -e		# Accept no failure
 
+# Force English language setting
+export LC_ALL=C
+
 # "Sizes" are all in sectors.  Otherwise we call it "bytes".
 SECTOR_BYTES=512
 EMMC_SIZE=14942208	# 7296 MB in sectors (not hex)
