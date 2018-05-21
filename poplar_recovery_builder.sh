@@ -820,7 +820,7 @@ function installer_finish() {
 	installer_update "echo (Please reset your board)"
 
 	if [ "${MANUFACTURE}" = true ] && [ "${IMAGE_TYPE}" = Android ]; then
-		installer_update "echo change bootcmd for Andorid"
+		installer_update "echo change bootcmd for Android"
 		installer_update "env set bootcmd run bootai"
 		installer_update "env save"
 		installer_update "reset"
@@ -933,8 +933,13 @@ if [ "${IMAGE_TYPE}" = Android ]; then
 	partition_define  1687551 ext4 android_system
 	partition_define       -1 none extended
 	partition_define   409599 ext4 android_vendor
+	if [ "${MANUFACTURE}" = false ]; then
 	partition_define  2097151 ext4 android_cache
 	partition_define       -1 ext4 android_user_data
+	else
+	partition_define   409599 ext4 android_cache
+	partition_define   409599 ext4 android_user_data
+	fi
 else
 	partition_define 262144 vfat /boot
 	partition_define 3999743 ext4 /
